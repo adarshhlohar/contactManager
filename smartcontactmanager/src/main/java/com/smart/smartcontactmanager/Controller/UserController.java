@@ -9,7 +9,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.smart.smartcontactmanager.Entities.User;
+import com.smart.smartcontactmanager.Helper.Message;
 import com.smart.smartcontactmanager.Repository.UserRepository;
+
+import jakarta.servlet.http.HttpSession;
 
 
 @Controller
@@ -39,22 +42,32 @@ public class UserController {
         } 
 
         @PostMapping("/doResister")
-        public String resisterUser(@ModelAttribute("user") User user,@RequestParam(value = "agreement" , defaultValue = "false") boolean agreement,Model model){
+        public String resisterUser(@ModelAttribute("user") User user,@RequestParam(value = "agreement" , defaultValue = "false") boolean agreement,Model model,HttpSession session){
 
-
+        try {
             if (!agreement) {
                 System.out.println("Youre are not agreed to term and condition");
+                throw new Exception("Youre are not agreed to term and condition");
             }
 
             user.setRole("ROLE_USER");
             user.setEnable(true);
+            user.setImageUrl("default.png");
             System.out.println("Agreement "+ agreement);
             System.out.println("User "+ user);
 
             
-            User result = Urepo.save(user);
+            Urepo.save(user);
+            model.addAttribute("user", new User());
 
-            model.addAttribute("user", result);
+
+            session.setAttribute("message", new Message("Successfully Resistered!!", "alert-success"));
+        } catch (Exception e) {
+            e.printStackTrace();
+            model.addAttribute("user", user);
+            session.setAttribute("message", new Message("Something went wrong!!" + e.getMessage(), "alert-danger"));
+            return "signup";
+        }
             return "signup";
         }
 }
